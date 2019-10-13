@@ -1,2 +1,11 @@
-# tfm
-Master's Thesis summary.
+# Master's Thesis
+This repository contains some of the scripts and information related to my Master's Thesis, completed at Institut de Salut Global de Barcelona. Only the main workflow scripts are showed, since the rest of code is dedicated to data organization and plotting. The main title of the written report of the thesis is *Identification of blood cis-expression quantitative trait methylation (eQTM) in children* which may have changes for the journal paper version. This work represents one of the first steps of a project from ISGlobal called the Human Early Exposome project (HELIX), where environmental exposures and the molecular profiles of children are measured in order to find influences on the risk of disease.
+
+## Abstract
+Unraveling epigenetics mechanisms to regulate gene expression is a step forward to know how environment and disease could influence gene expression through their impact on DNA methylation. Here we aimed to identify cis (1 Mb) expression quantitative trait methylation (eQTM) in children. We analyzed DNA methylation and gene expression data from 832 blood samples from children of European ancestry by regressing out DNA methylation and gene expression levels. We next applied chi-squared tests to the investigate the enrichment of significant eQTMs for regulatory features. Out of the 13,615,882 CpG-transcript cluster (TC) pairs tested, we identified a total of 15,403 cis-eQTMs, 9,477 (61.5%) of them with an inverse relationship. Mean distance between significant CpG-TC pairs is 240 kb, and most of cis-eQTMs have low distances. Cis-eQTMs
+were enriched for distant promoters, N and S CpG island shores, and transcriptional and enhancer chromatin states. This catalogue of cis-eQTMs will be useful to understand DNA methylation effects on gene expression of blood cells during childhood.
+
+## Other notes
+* The main tools used are R programming with additional packages from [Bioconductor](https://www.bioconductor.org). Some minor bash scripts are also used.
+* All the scripts were executed at ISGlobal servers through SSH due to the computational costs of the analysis. Resources where controled using `htop` command.
+* Although the related paper is still in process of publication, I've been already told that another association models were used and some of the parts were redone for the publication, and therefore modifications are expected.
