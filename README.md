@@ -8,4 +8,4 @@ were enriched for distant promoters, N and S CpG island shores, and transcriptio
 ## Other notes
 * The main tools used are R programming and packages from [Bioconductor](https://www.bioconductor.org). Some minor bash scripts are also used.
 * All the scripts were executed at ISGlobal servers through SSH due to the computational costs of the analysis. Resources where controled using `htop` command.
-* Although the related paper is still in process of publication, I've been already told that another association models were used and some of the parts were redone for the publication, and therefore **modifications are expected**.
+* Although the related paper is still in process of publication, I've been already told that another association models were used and some parts were redone for the publication. Therefore, **modifications are expected**.
