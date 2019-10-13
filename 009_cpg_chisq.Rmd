@@ -1,0 +1,182 @@
+---
+title: "Chi-squared tests"
+author: "Sergi"
+output: html_document
+---
+
+```{r setup}
+load("/home/isglobal.lan/smari/data/smari/res2.data.RData")
+head(res2.data)
+bonf <- 0.05/nrow(res2.data)
+bonf
+res2.data$bonf <- ifelse(res2.data$p.value < bonf, "sig", "nosig")
+rsig <- res2.data[res2.data$bonf == "sig", ]
+
+rsig_hypo <- rsig[rsig$Estimate < 0, ]
+rsig_hypo <- rsig_hypo[!duplicated(rsig_hypo$CpG), ]
+dim(rsig_hypo)
+
+rsig_hyper <- rsig[rsig$Estimate > 0, ]
+rsig_hyper <- rsig_hyper[!duplicated(rsig_hyper$CpG), ]
+dim(rsig_hyper)
+
+rsig_both <- rsig_hyper[rsig_hyper$CpG %in% rsig_hypo$CpG,]
+rsig_hypo <- rsig_hypo[!(rsig_hypo$CpG %in% rsig_both$CpG), ]
+rsig_hyper <- rsig_hyper[!(rsig_hyper$CpG %in% rsig_both$CpG), ]
+rsig_both$bonf <- "sig_both"
+rsig_hypo$bonf <- "sig_hypo"
+rsig_hyper$bonf <- "sig_hyper"
+
+rsig <- rsig[!duplicated(rsig$CpG), ]
+dim(rsig)
+
+stopifnot(nrow(rsig) == (nrow(rsig_both) + nrow(rsig_hyper) + nrow(rsig_hypo)))
+
+rnosig <- res2.data[!(res2.data$CpG %in% rsig$CpG), ]
+rnosig <- rnosig[!(duplicated(rnosig$CpG)), ]
+dim(rnosig)
+
+r <- rbind(rsig_hyper, rsig_hypo, rsig_both, rnosig)
+dim(r)
+```
+
+## Genomic position
+
+```{r genomic_pos}
+r$g <- ifelse(r$UCSC_RefGene_Name != "", "genic", "intergenic")
+
+g <- table(r$bonf, r$g)
+g <- as.data.frame.matrix(g)
+g
+
+# Sig vs no sig
+g1 <- rbind(nosig = g[1, ], sig = colSums(g[-1, ]))
+g1
+chisq.test(g1)
+or <- (g1[1, 1] * g1[2, 2]) / (g1[1, 2] * g1[2, 1])
+cat("Odds Ratio: ", or, "\n", sep = "")
+
+# Pos vs neg
+g2 <- g[-c(1,2),]
+g2
+chisq.test(g2)
+or <- (g2[1, 1] * g2[2, 2]) / (g2[1, 2] * g2[2, 1])
+cat("Odds Ratio: ", or, "\n", sep = "")
+```
+
+## Relation to island
+
+```{r island}
+rti <- table(r$bonf, r$Relation_to_Island)
+rti <- as.data.frame.matrix(rti)
+rti
+
+# Sig vs no sig
+rti1 <- rbind(nosig = rti[1, ], sig = colSums(rti[-1, ]))
+rti1
+chisq.test(rti1)
+
+# Pos vs neg
+rti2 <- rti[-c(1,2),]
+rti2
+chisq.test(rti2)
+
+# Proportions
+p <- NULL
+for (i in 1:nrow(rti)) {
+  prop <- prop.table(rti[i,])
+  p <- rbind(p, prop)
+}
+rownames(p) <- rownames(rti)
+round(p*100, 2)
+```
+
+## Relative position
+
+```{r relative_p}
+# Relative position
+
+coln <- NULL
+pvals1 <- NULL
+pvals2 <- NULL
+for (i in 14:19) {
+  cat("\n########################################################\n\n")
+  print(colnames(r)[i])
+  rp <- table(r$bonf, r[,i])
+  rp <- as.data.frame.matrix(rp)
+  rp <- rp[,c(2,1)]
+  coln <- c(coln, colnames(r)[i])
+  
+  cat("\n## Sig vs nosig ##\n\n")
+  rp1 <- rbind(nosig = rp[1, ], sig = colSums(rp[-1, ]))
+  print(rp1)
+  xt <- chisq.test(rp1)
+  print(xt)
+  or <- (rp1[1, 1] * rp1[2, 2]) / (rp1[1, 2] * rp1[2, 1])
+  cat("Odds Ratio: ", or, "\n", sep = "")
+  pvals1 <- c(pvals1, xt$p.value)
+  
+  cat("\n## Pos vs neg ##\n\n")
+  rp2 <- rp[-c(1,2),]
+  print(rp2)
+  xt <- chisq.test(rp2)
+  print(xt)
+  or <- (rp2[1, 1] * rp2[2, 2]) / (rp2[1, 2] * rp2[2, 1])
+  cat("Odds Ratio: ", or, "\n", sep = "")
+  pvals2 <- c(pvals2, xt$p.value)
+}
+
+pvals <- data.frame("RelPosition" = coln,
+                    "Sig_vs_nosig_pval" = pvals1,
+                    "Pos_vs_neg_pval" = pvals2)
+print(pvals)
+```
+
+## Chromatin States
+
+```{r chrom_states, message=FALSE}
+library("minfi")
+load("/home/isglobal.lan/smari/data/smari/gset_sm_1.RData") # gset
+cs <- rowData(gset)
+cs <- as.data.frame(cs[, c(1,29:43)])
+colnames(cs)[1] <- "CpG"
+dim(cs)
+head(cs)
+r <- merge(r, cs, by = "CpG", sort = FALSE)
+
+coln <- NULL
+pvals1 <- NULL
+pvals2 <- NULL
+for (i in 23:37) {
+  cat("\n########################################################\n\n")
+  print(colnames(r)[i])
+  rp <- table(r$bonf, r[,i])
+  rp <- as.data.frame.matrix(rp)
+  rp <- rp[,c(2,1)]
+  coln <- c(coln, colnames(r)[i])
+  
+  cat("\n## Sig vs nosig ##\n\n")
+  rp1 <- rbind(nosig = rp[1, ], sig = colSums(rp[-1, ]))
+  print(rp1)
+  xt <- chisq.test(rp1)
+  print(xt)
+  or <- (rp1[1, 1] * rp1[2, 2]) / (rp1[1, 2] * rp1[2, 1])
+  cat("Odds Ratio: ", or, "\n", sep = "")
+  pvals1 <- c(pvals1, xt$p.value)
+  
+  cat("\n## Pos vs neg ##\n\n")
+  rp2 <- rp[-c(1,2),]
+  print(rp2)
+  xt <- chisq.test(rp2)
+  print(xt)
+  or <- (rp2[1, 1] * rp2[2, 2]) / (rp2[1, 2] * rp2[2, 1])
+  cat("Odds Ratio: ", or, "\n", sep = "")
+  pvals2 <- c(pvals2, xt$p.value)
+}
+
+pvals <- data.frame("Chromatin_State" = coln,
+                    "Sig_vs_nosig_pval" = pvals1,
+                    "Pos_vs_neg_pval" = pvals2)
+
+print(pvals)
+```
